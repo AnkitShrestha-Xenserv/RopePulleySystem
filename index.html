@@ -8,7 +8,7 @@
     <div id ="canvas"></div>
 
     <script>
-        let id = document.getElementById('canvas')
+        let canvas = document.getElementById('canvas')
         const engine= Matter.Engine.create();
         const world = engine.world;
 
@@ -16,7 +16,7 @@
         const groupB = -2;
         
         const render = Matter.Render.create({
-            element:id,
+            element:canvas,
             engine:engine,
             options:{
                 width: window.innerWidth,
@@ -32,7 +32,7 @@
         WEIGHT3_POS = 750
         INDIVIDUAL_ROPE_DIST = 20
         // Create a static object (anchor point for the rope)
-        const anchor1 = Matter.Bodies.circle(730, 150, 50,{ isStatic: true ,collisionFilter:{
+        const anchor1 = Matter.Bodies.circle(745, 150, 50,{ isStatic: true ,collisionFilter:{
             group:groupB
         }});
         const anchor2 = Matter.Bodies.circle(900, 150, 50,{ isStatic: true });
@@ -46,9 +46,9 @@
         const weight3 = Matter.Bodies.circle(WEIGHT3_POS, 150,30,{ isStatic: false ,collisionFilter:{
             group:groupA
         }});
-        Matter.Body.setMass(weight1,0.003)
-        Matter.Body.setMass(weight2,0.0041)
-        Matter.Body.setMass(weight3,0.005)
+        Matter.Body.setMass(weight1,0.4)
+        Matter.Body.setMass(weight2,0.44)
+        Matter.Body.setMass(weight3,0.6)
 
         // Create an array to hold rope-like bodies
         const ropeBodies = [];
@@ -61,9 +61,11 @@
      
             
             const ropeBody = Matter.Bodies.circle(WEIGHT1_POS+ 10*i, 100 , 10,{collisionFilter:{group:groupA}});
-            Matter.Body.setMass(ropeBody,0.0001)
+            Matter.Body.setMass(ropeBody,0.01)
                 ropeBodies.push(ropeBody);  
                 ropeBody.restitution = 0;
+                ropeBody.damping = 0;
+                ropeBody.friction = 0;
         
                 const constraint = Matter.Constraint.create({
                     bodyA: i==0? weight1: ropeBodies[i - 1],
@@ -90,16 +92,35 @@
 
         Matter.World.add(world, constraint);
         Matter.World.add(world, constraint2);
+
         // Create ground
         const ground = Matter.Bodies.rectangle(300, 700, 2500, 20, { isStatic: true });
-
+        let mouseX = 1030;
+        let mouseY = 400;
         // Create Water level
-        const waterLevel = Matter.Bodies.rectangle(1030, 400, 200, 20, { isStatic: true });
+        const waterLevel = Matter.Bodies.rectangle(mouseX, mouseY, 200, 20, { isStatic: true });
+        const waterLevelLeftBound = Matter.Bodies.rectangle(mouseX-100, mouseY-50, 20, 80, { isStatic: true });
+        const waterLevelRightBound = Matter.Bodies.rectangle(mouseX+100, mouseY-50, 20, 80, { isStatic: true });
+        
+        
+        canvas.addEventListener("mousemove", (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        Matter.Events.on(render, 'beforeRender', () => {
+            // Calculate the new position for the waterLevel based on the mouse position
+            const newWaterLevelX = mouseX;
+            const newWaterLevelY = mouseY;
 
+            // Update the waterLevel's position
+            Matter.Body.setPosition(waterLevel, { x: newWaterLevelX, y: newWaterLevelY });
+            Matter.Body.setPosition(waterLevelLeftBound, { x: newWaterLevelX-100, y: newWaterLevelY-50 });
+            Matter.Body.setPosition(waterLevelRightBound, { x: newWaterLevelX+100, y: newWaterLevelY-50 });
+        });
 
 
         // Add bodies and constraint to the world
-        Matter.World.add(engine.world,[ground,weight1,weight2,weight3,anchor1,anchor2,waterLevel]);
+        Matter.World.add(engine.world,[ground,weight1,weight2,weight3,anchor1,anchor2,waterLevel,waterLevelLeftBound,waterLevelRightBound]);
         Matter.Engine.run(engine);
         Matter.Render.run(render);
 
