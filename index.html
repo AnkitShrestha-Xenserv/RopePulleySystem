@@ -52,7 +52,8 @@
             let ropeBody = Matter.Bodies.circle(100+ 10*i, 100 , 10,{collisionFilter:{
             group:groupA
         }});
-            Matter.Body.setMass(ropeBody,1)
+        const ROPE_MASS=0.00001;
+            Matter.Body.setMass(ropeBody,ROPE_MASS)
             ropeBodies.push(ropeBody);  
 
             const constraint = Matter.Constraint.create({
