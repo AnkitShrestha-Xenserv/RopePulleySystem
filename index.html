@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Document</title>
+    <script src="node_modules\matter-js\build\matter.js"></script>
+</head>
+<body>
+    <div id ="canvas"></div>
+
+    <script>
+        let id = document.getElementById('canvas')
+        const engine= Matter.Engine.create();
+        const world = engine.world;
+
+        const groupA = -1; 
+        const groupB = -2;
+        
+        const render = Matter.Render.create({
+            element:id,
+            engine:engine,
+            options:{
+                width: window.innerWidth,
+                height: window.innerHeight,
+                showCollision:true
+            }
+        });
+
+
+        WEIGHT1_POS = 100
+        WEIGHT2_POS = 500
+        INDIVIDUAL_ROPE_DIST = 10
+        // Create a static object (anchor point for the rope)
+        const anchor1 = Matter.Bodies.circle(250, 150, 30,{ isStatic: true ,collisionFilter:{
+            group:groupB
+        }});
+        const anchor2 = Matter.Bodies.circle(400, 150, 30,{ isStatic: true });
+
+        const weight1 = Matter.Bodies.circle(WEIGHT1_POS, 150,30,{ isStatic: false ,collisionFilter:{
+            group:groupA
+        }});
+        const weight2 = Matter.Bodies.circle(WEIGHT2_POS, 150,30,{ isStatic: false ,collisionFilter:{
+            group:groupA
+        }});
+
+        // Create an array to hold rope-like bodies
+        const ropeBodies = [];
+        const ropeLength = 40; // Number of rope segments
+
+        // Create rope-like bodies and constraints
+        for (let i = 0; i < ropeLength; i++) {
+            
+            let ropeBody = Matter.Bodies.circle(100+ 10*i, 100 , 10,{collisionFilter:{
+            group:groupA
+        }});
+            Matter.Body.setMass(ropeBody,1)
+            ropeBodies.push(ropeBody);  
+
+            const constraint = Matter.Constraint.create({
+                bodyA: i==0? weight1: ropeBodies[i - 1],
+                bodyB: ropeBody,
+                length: INDIVIDUAL_ROPE_DIST,
+                stiffness: 1
+            });
+            Matter.World.add(world, constraint);
+            Matter.World.add(world, ropeBody);
+        }
+        let constraint = Matter.Constraint.create({
+            bodyA: ropeBodies[ropeLength-1],
+            bodyB: weight2,
+            length: INDIVIDUAL_ROPE_DIST,
+            stiffness: 1
+        });
+
+        Matter.World.add(world, constraint);
+        // Create ground
+        const ground = Matter.Bodies.rectangle(300, 600, 600, 20, { isStatic: true });
+
+        // Add bodies and constraint to the world
+        Matter.World.add(engine.world,[ground,weight1,weight2,anchor1]);
+        Matter.Engine.run(engine);
+        Matter.Render.run(render);
+
+
+    </script>
+    
+</body>
+</html>
